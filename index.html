@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+
+  <title>ギルドメンバーポジション表</title>
+  <script>
+    const initialData = [
+      { name: "", position: "前", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "前", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "前", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "前", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "前", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" },
+      { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" }
+    ];
+
+    function createTable() {
+      const memberCount = parseInt(document.getElementById("memberCount").value);
+      const tableBody = document.getElementById("guildTableBody");
+
+      tableBody.innerHTML = "";
+
+      const savedData = JSON.parse(localStorage.getItem("guildData")) || initialData;
+
+      for (let i = 0; i < memberCount; i++) {
+        const row = document.createElement("tr");
+
+        const noCell = document.createElement("td");
+        noCell.textContent = i + 1;
+        row.appendChild(noCell);
+
+        const nameCell = document.createElement("td");
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = savedData[i]?.name || "";
+        nameInput.oninput = saveData;
+        nameCell.appendChild(nameInput);
+        row.appendChild(nameCell);
+
+        const positionCell = document.createElement("td");
+        const positionSelect = document.createElement("select");
+        ["前", "後", "前後"].forEach(optionText => {
+          const option = document.createElement("option");
+          option.value = optionText;
+          option.textContent = optionText;
+          if (optionText === (savedData[i]?.position || "前")) option.selected = true;
+          positionSelect.appendChild(option);
+        });
+        positionSelect.onchange = saveData;
+        positionCell.appendChild(positionSelect);
+        row.appendChild(positionCell);
+
+        ["昼", "夜１", "夜２"].forEach((time, index) => {
+          const evalCell = document.createElement("td");
+          const evalSelect = document.createElement("select");
+          ["〇", "△", "×", "？"].forEach(optionText => {
+            const option = document.createElement("option");
+            option.value = optionText;
+            option.textContent = optionText;
+            if (optionText === (savedData[i]?.evaluations[index] || "？")) option.selected = true;
+            evalSelect.appendChild(option);
+          });
+          evalSelect.onchange = saveData;
+          evalCell.appendChild(evalSelect);
+          row.appendChild(evalCell);
+        });
+
+        const dbCell1 = document.createElement("td");
+        const dbInput1 = document.createElement("input");
+        dbInput1.type = "text";
+        dbInput1.value = savedData[i]?.drablere1 || "";
+        dbInput1.oninput = saveData;
+        dbCell1.appendChild(dbInput1);
+        row.appendChild(dbCell1);
+
+        const dbCell2 = document.createElement("td");
+        const dbInput2 = document.createElement("input");
+        dbInput2.type = "text";
+        dbInput2.value = savedData[i]?.drablere2 || "";
+        dbInput2.oninput = saveData;
+        dbCell2.appendChild(dbInput2);
+        row.appendChild(dbCell2);
+
+        tableBody.appendChild(row);
+      }
+    }
+
+    function saveData() {
+      const tableBody = document.getElementById("guildTableBody");
+      const data = [];
+      [...tableBody.rows].forEach(row => {
+        const name = row.cells[1].querySelector("input").value;
+        const position = row.cells[2].querySelector("select").value;
+        const evaluations = [
+          row.cells[3].querySelector("select").value,
+          row.cells[4].querySelector("select").value,
+          row.cells[5].querySelector("select").value,
+        ];
+        const drablere1 = row.cells[6].querySelector("input").value;
+        const drablere2 = row.cells[7].querySelector("input").value;
+        data.push({ name, position, evaluations, drablere1, drablere2 });
+      });
+      localStorage.setItem("guildData", JSON.stringify(data));
+    }
+
+    function resetData() {
+      localStorage.setItem("guildData", JSON.stringify(initialData));
+      createTable();
+    }
+
+    function resetParticipationData() {
+      const savedData = JSON.parse(localStorage.getItem("guildData")) || initialData;
+      savedData.forEach(member => {
+        member.evaluations = ["〇", "〇", "〇"]; // デフォルト評価にリセット
+      });
+      localStorage.setItem("guildData", JSON.stringify(savedData));
+      createTable();
+    }
+function initializeTable() {
+  const table = document.getElementById("scheduleTable");
+  table.addEventListener("input", populateMemberOptions); // テーブル更新時にドロップダウンを更新
+
+  populateMemberOptions(); // 初期ロード時にドロップダウンを表示
+}
+//evaluations
+function populateMemberOptions() {
+  const savedData = JSON.parse(localStorage.getItem("guildData")) || initialData;
+
+  // ドロップダウンのメンバーを格納する配列
+  const dayMembers = [];
+  const night1Members = [];
+  const night2Members = [];
+
+  // メンバーの評価に基づいてフィルタリング
+  savedData.forEach(member => {
+    if (member.position === "前" || member.position === "前後") {
+      // 昼のドロップダウンにはすべての評価が〇のメンバーを表示
+      if (member.evaluations[0] !== "×") {
+        dayMembers.push(member.name);
+      }
+      // 夜1のドロップダウンには2番目の評価が〇のメンバーを表示
+      if (member.evaluations[1] !== "×") {
+        night1Members.push(member.name);
+      }
+      // 夜2のドロップダウンには3番目の評価が〇のメンバーを表示
+      if (member.evaluations[2] !== "×") {
+        night2Members.push(member.name);
+      }
+    }
+  });
+
+  // ドロップダウンにメンバーを追加
+  for (let i = 1; i <= 5; i++) {
+    // 昼のドロップダウン
+    const daySelect = document.getElementById(`member${i}`);
+    daySelect.innerHTML = ""; // 既存のオプションをクリア
+    dayMembers.forEach(member => {
+      const option = document.createElement("option");
+      option.value = member;
+      option.textContent = member;
+      daySelect.appendChild(option);
+    });
+
+    // 夜1のドロップダウン
+    const night1Select = document.getElementById(`member${i}_night1`);
+    night1Select.innerHTML = ""; // 既存のオプションをクリア
+    night1Members.forEach(member => {
+      const option = document.createElement("option");
+      option.value = member;
+      option.textContent = member;
+      night1Select.appendChild(option);
+    });
+
+    // 夜2のドロップダウン
+    const night2Select = document.getElementById(`member${i}_night2`);
+    night2Select.innerHTML = ""; // 既存のオプションをクリア
+    night2Members.forEach(member => {
+      const option = document.createElement("option");
+      option.value = member;
+      option.textContent = member;
+      night2Select.appendChild(option);
+    });
+  }
+}
+
+
+
+
+
+
+function outputSchedule() {
+  const scheduleTable = document.getElementById("scheduleTable");
+  let output = "";
+
+  // 1行目（タイトル行）をスキップして、2行目から処理
+  for (let i = 1; i < scheduleTable.rows.length; i++) {
+    const row = scheduleTable.rows[i];
+    let rowData = [];
+    
+    // 各セルの内容を取得
+    for (let j = 0; j < row.cells.length; j++) {
+      rowData.push(row.cells[j].querySelector("select") ? row.cells[j].querySelector("select").value : row.cells[j].textContent.trim());
+    }
+    
+    // 行データをタブ区切りで結合し、改行を追加
+    output += rowData.join("\t") + "\n";
+  }
+
+  // 出力エリアに表示
+  const outputDiv = document.getElementById("outputString");
+  outputDiv.textContent = output; // 表示用のdivに文字列を設定
+}
+
+
+function sendSchedule(){
+  const scheduleTable = document.getElementById("scheduleTable");
+  const selectedDate = document.getElementById("scheduleDate").value; // 選択された日付
+  let output = "";
+  output += `日付: ${selectedDate}\n\n`;
+  // 1行目（タイトル行）をスキップして、2行目から処理
+  for (let i = 1; i < scheduleTable.rows.length; i++) {
+    const row = scheduleTable.rows[i];
+    let rowData = [];
+    
+    // 各セルの内容を取得
+    for (let j = 0; j < row.cells.length; j++) {
+      rowData.push(row.cells[j].querySelector("select") ? row.cells[j].querySelector("select").value : row.cells[j].textContent.trim());
+    }
+    
+    // 行データをタブ区切りで結合し、改行を追加
+    output += rowData.join("\t") + "\n";
+  }
+output+="\n";
+  // Discord Webhook URL
+  const webhookUrl = localStorage.getItem("webhookUrl") ;
+
+  // Webhookにデータを送信
+  fetch(webhookUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      content: output // メッセージ内容
+    })
+  })
+  .then(response => {
+    if (response.ok) {
+      console.log("Data sent to Discord successfully!");
+    } else {
+      console.error("Error sending data to Discord:", response.statusText);
+    }
+  })
+  .catch(error => {
+    console.error("Error:", error);
+  });
+
+  
+}
+ // ページ読み込み時に日付の初期値を今日の日付に設定
+ document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0'); // 月は0始まりなので+1
+      const day = String(today.getDate()).padStart(2, '0');
+      document.getElementById("scheduleDate").value = `${year}-${month}-${day}`;
+    });
+function resetSchedule() {
+  for (let i = 1; i <= 5; i++) {
+    for (const time of ["", "_night1", "_night2"]) {
+      const select = document.getElementById(`member${i}${time}`);
+      select.selectedIndex = 0; // 最初の選択肢にリセット
+    }
+  }
+}
+
+function saveWebhookUrl() {
+            const webhookUrl = document.getElementById("webhookInput").value; // 入力された URL を取得
+
+            if (webhookUrl) { // URLが空でない場合のみ保存
+                localStorage.setItem("webhookUrl", webhookUrl); // URL を localStorage に保存
+                alert("Webhook URLが保存されました: " + webhookUrl);
+            } else {
+                alert("Webhook URLを入力してください。");
+            }
+        }
+
+    window.onload = () => {
+      const savedData = JSON.parse(localStorage.getItem("guildData"));
+      document.getElementById("memberCount").value = savedData ? savedData.length : initialData.length;
+      createTable();
+      populateMemberOptions();
+      const savedWebhookUrl = localStorage.getItem("webhookUrl");
+            if (savedWebhookUrl) {
+                document.getElementById("webhookInput").value = savedWebhookUrl; // 保存された値を入力欄に表示
+            }
+
+    };
+  </script>
+</head>
+<body>
+
+  <h1>ギルドメンバーポジション表</h1>
+
+  <label for="memberCount">ギルドメンバーの人数を選択してください（最大18人）:</label>
+  <select id="memberCount" onchange="createTable()">
+  </select>
+  
+  <script>
+    function populateMemberCountOptions() {
+      const memberSelect = document.getElementById("memberCount");
+      for (let i = 1; i <= 18; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = i;
+        memberSelect.appendChild(option);
+      }
+    }
+    populateMemberCountOptions();
+  </script>
+
+  <table border="1" id="guildTable">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>名前</th>
+        <th>前/後</th>
+        <th>昼</th>
+        <th>夜１</th>
+        <th>夜２</th>
+        <th>ドラブレ１</th>
+        <th>ドラブレ２</th>
+      </tr>
+    </thead>
+    <tbody id="guildTableBody">
+    </tbody>
+  </table>
+
+  <button onclick="resetData()">リセット</button>
+  <button onclick="resetParticipationData()">参加予定リセット</button>
+  <h2>前衛予定リスト</h2>
+  <label for="">上の表の変更を行った後に再読み込みをお願いします</label>
+ 
+  <table border="1" id="scheduleTable">
+    <thead>
+      <tr>
+        <th>時間帯</th>
+        <th>メンバー１</th>
+        <th>メンバー２</th>
+        <th>メンバー３</th>
+        <th>メンバー４</th>
+        <th>メンバー５</th>
+      </tr>
+    </thead>
+    <tbody id="scheduleTableBody">
+      <tr>
+        <td>昼</td>
+        <td><select id="member1"></select></td>
+        <td><select id="member2"></select></td>
+        <td><select id="member3"></select></td>
+        <td><select id="member4"></select></td>
+        <td><select id="member5"></select></td>
+      </tr>
+      <tr>
+        <td>夜１</td>
+        <td><select id="member1_night1"></select></td>
+        <td><select id="member2_night1"></select></td>
+        <td><select id="member3_night1"></select></td>
+        <td><select id="member4_night1"></select></td>
+        <td><select id="member5_night1"></select></td>
+      </tr>
+      <tr>
+        <td>夜２</td>
+        <td><select id="member1_night2"></select></td>
+        <td><select id="member2_night2"></select></td>
+        <td><select id="member3_night2"></select></td>
+        <td><select id="member4_night2"></select></td>
+        <td><select id="member5_night2"></select></td>
+      </tr>
+    </tbody>
+  </table>
+  <button onclick="resetSchedule()">参加予定リセット</button>
+  <br>
+<br>
+  <label for="">日時を決定し送信ボタンを押すことでディスコードに送信できます</label>
+ <br>
+ <br>
+ <label for="">ディスコードのWebhookのURLを入力してください</label>
+  <br>
+  <label for="webhookInput">Webhook URL:</label>
+  <input type="text" id="webhookInput" placeholder="Webhook URLを入力">
+    <button id="saveWebhookBtn" onclick="saveWebhookUrl()">Save</button>
+  <br>
+  <label for="scheduleDate">対戦日時:</label>
+  <input type="date" id="scheduleDate">
+  <button id="sendButton" onclick="sendSchedule()">送信</button>
+  
+  
+  <h2>前衛メンバーをテキストとして出力する</h2>
+
+
+<button id="outputButton" onclick="outputSchedule()">出力</button>
+<div id="outputString" style="margin-top: 20px;  white-space: pre-wrap; text-align: center;"></div>
+<br>
+<br> 
+<br>
+
+
+</body>
+</html>
