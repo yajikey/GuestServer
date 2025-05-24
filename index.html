@@ -26,6 +26,8 @@
       { name: "", position: "後", evaluations: ["〇", "〇", "〇"], drablere1: "", drablere2: "" }
     ];
 
+
+    //ギルドメンバーの表を作る。
     function createTable() {
       const memberCount = parseInt(document.getElementById("memberCount").value);
       const tableBody = document.getElementById("guildTableBody");
@@ -45,7 +47,11 @@
         const nameInput = document.createElement("input");
         nameInput.type = "text";
         nameInput.value = savedData[i]?.name || "";
-        nameInput.oninput = saveData;
+        nameInput.oninput = function() {
+  console.log("Input changed"); // これでイベントが発火しているか確認
+  saveData();
+  populateMemberOptions();
+};
         nameCell.appendChild(nameInput);
         row.appendChild(nameCell);
 
@@ -58,7 +64,10 @@
           if (optionText === (savedData[i]?.position || "前")) option.selected = true;
           positionSelect.appendChild(option);
         });
-        positionSelect.onchange = saveData;
+        positionSelect.onchange = function() {
+  saveData();
+  populateMemberOptions();
+};
         positionCell.appendChild(positionSelect);
         row.appendChild(positionCell);
 
@@ -72,7 +81,10 @@
             if (optionText === (savedData[i]?.evaluations[index] || "？")) option.selected = true;
             evalSelect.appendChild(option);
           });
-          evalSelect.onchange = saveData;
+          evalSelect.onchange = function() {
+  saveData();
+  populateMemberOptions();
+};
           evalCell.appendChild(evalSelect);
           row.appendChild(evalCell);
         });
@@ -81,7 +93,12 @@
         const dbInput1 = document.createElement("input");
         dbInput1.type = "text";
         dbInput1.value = savedData[i]?.drablere1 || "";
-        dbInput1.oninput = saveData;
+        dbInput1.className = "input2"; 
+        dbInput1.oninput = function() {
+  console.log("Input changed"); // これでイベントが発火しているか確認
+  saveData();
+  populateMemberOptions();
+};
         dbCell1.appendChild(dbInput1);
         row.appendChild(dbCell1);
 
@@ -89,13 +106,19 @@
         const dbInput2 = document.createElement("input");
         dbInput2.type = "text";
         dbInput2.value = savedData[i]?.drablere2 || "";
-        dbInput2.oninput = saveData;
+        dbInput2.className = "input2"; 
+        dbInput2.oninput = function() {
+  console.log("Input changed"); // これでイベントが発火しているか確認
+  saveData();
+  populateMemberOptions();
+};
         dbCell2.appendChild(dbInput2);
         row.appendChild(dbCell2);
 
         tableBody.appendChild(row);
       }
     }
+
 
     function saveData() {
       const tableBody = document.getElementById("guildTableBody");
@@ -115,11 +138,13 @@
       localStorage.setItem("guildData", JSON.stringify(data));
     }
 
+    //リセットボタン
     function resetData() {
       localStorage.setItem("guildData", JSON.stringify(initialData));
       createTable();
     }
 
+    //デフォルトに戻す
     function resetParticipationData() {
       const savedData = JSON.parse(localStorage.getItem("guildData")) || initialData;
       savedData.forEach(member => {
@@ -127,79 +152,201 @@
       });
       localStorage.setItem("guildData", JSON.stringify(savedData));
       createTable();
+      
     }
-function initializeTable() {
-  const table = document.getElementById("scheduleTable");
-  table.addEventListener("input", populateMemberOptions); // テーブル更新時にドロップダウンを更新
 
-  populateMemberOptions(); // 初期ロード時にドロップダウンを表示
-}
-//evaluations
+//前衛メンバーを管理
+var ArrayToggle=false;
+let DayArray = new Array(5);
+let Night1Array = new Array(5);
+let Night2Array = new Array(5);
 function populateMemberOptions() {
   const savedData = JSON.parse(localStorage.getItem("guildData")) || initialData;
-
-  // ドロップダウンのメンバーを格納する配列
+  console.log("起動");
   const dayMembers = [];
   const night1Members = [];
   const night2Members = [];
+  const daySign = [];
+  const night1Sign = [];
+  const night2Sign = [];
+  const dayPos = [];
+  const night1Pos = [];
+  const night2Pos = [];
 
   // メンバーの評価に基づいてフィルタリング
   savedData.forEach(member => {
     if (member.position === "前" || member.position === "前後") {
-      // 昼のドロップダウンにはすべての評価が〇のメンバーを表示
       if (member.evaluations[0] !== "×") {
         dayMembers.push(member.name);
+        daySign.push(member.evaluations[0]);
+        dayPos.push(`(${member.position})`);
       }
-      // 夜1のドロップダウンには2番目の評価が〇のメンバーを表示
       if (member.evaluations[1] !== "×") {
         night1Members.push(member.name);
+        night1Sign.push(member.evaluations[1]);
+        night1Pos.push(`(${member.position})`);
       }
-      // 夜2のドロップダウンには3番目の評価が〇のメンバーを表示
       if (member.evaluations[2] !== "×") {
         night2Members.push(member.name);
+        night2Sign.push(member.evaluations[2]);
+        night2Pos.push(`(${member.position})`);
       }
     }
   });
 
-  // ドロップダウンにメンバーを追加
+  if(!ArrayToggle){
+for(let i=1;i<=5;i++){
+    DayArray[i]=dayMembers[i-1];
+    Night1Array[i]=night1Members[i-1];
+    Night2Array[i]=night2Members[i-1];
+}
+ArrayToggle=true;
+  }
+  
+  
+  // 各ドロップダウンを設定
   for (let i = 1; i <= 5; i++) {
-    // 昼のドロップダウン
-    const daySelect = document.getElementById(`member${i}`);
-    daySelect.innerHTML = ""; // 既存のオプションをクリア
-    dayMembers.forEach(member => {
-      const option = document.createElement("option");
-      option.value = member;
-      option.textContent = member;
-      daySelect.appendChild(option);
-    });
-
-    // 夜1のドロップダウン
-    const night1Select = document.getElementById(`member${i}_night1`);
-    night1Select.innerHTML = ""; // 既存のオプションをクリア
-    night1Members.forEach(member => {
-      const option = document.createElement("option");
-      option.value = member;
-      option.textContent = member;
-      night1Select.appendChild(option);
-    });
-
-    // 夜2のドロップダウン
-    const night2Select = document.getElementById(`member${i}_night2`);
-    night2Select.innerHTML = ""; // 既存のオプションをクリア
-    night2Members.forEach(member => {
-      const option = document.createElement("option");
-      option.value = member;
-      option.textContent = member;
-      night2Select.appendChild(option);
-    });
+    
+    setupDropdown("day", i, dayMembers, daySign, dayPos, DayArray);
+    setupDropdown("night1", i, night1Members, night1Sign, night1Pos, Night1Array);
+    setupDropdown("night2", i, night2Members, night2Sign, night2Pos, Night2Array);
   }
 }
 
+// ドロップダウンのセットアップ
+function setupDropdown(type, index, members, signs, positions, array) {
+  const dropdown = document.getElementById(`member${index}${type !== "day" ? `_${type}` : ""}`);
+  dropdown.innerHTML = ""; // 既存のオプションをクリア
+
+  //console.log("とりあえず起動");
+  for (let j = 0; j < members.length; j++) {
+  const member = members[j];
+  const option = document.createElement("option");
+  option.value = member;
+  dropdown.appendChild(option);
+
+  if (member === array[index] &&Rem) {
+    option.selected = true;
+
+  }
+ 
+  
+  
+  // optionにdisabledを適用
+if(Rem){
+    option.disabled = array.includes(option.value);
+  //  console.log(type,array);
+}
+//console.log("よばれた");
+  if(situation){
+    const result = PoD ? ` ${positions[j]}` : "";
+    option.textContent = `${signs[j]}${result}：${option.value}`;
+  }
+  else{
+    option.textContent = member;
+  }
+
+}
 
 
+  setupClickEvents(dropdown, index, type, members, signs, positions, array);
+}
+
+// クリックイベントのセットアップ
+function setupClickEvents(dropdown, index, type, members, signs, positions, array) {
+  let isClicked = false; // クリック状態を判定するフラグ
+
+  dropdown.onchange = function () {
+  const options = dropdown.querySelectorAll("option");
+  const selectedValue = event.target.value;
+  //console.log(`選択された値: ${selectedValue}`);
+  //console.log(index, type,menubar);
+  if(type==="day"){
+    DayArray[index]=selectedValue;
+   // console.log(  DayArray,index,selectedValue)
+   }
+   if(type==="night1"){
+    Night1Array[index]=selectedValue;
+    console.log(  Night1Array[index],index,selectedValue)
+   }
+   if(type==="night2"){
+    Night2Array[index]=selectedValue;
+    console.log(  Night2Array[index],index,selectedValue)
+   }
+
+   for (let i = 1; i <= 5; i++) {
+    
+    setupDropdown(type, i, members, signs, positions, array);
+  }
+  
+saveCurrentSelections();
+
+};
 
 
+}
 
+// 表示中の選択肢をlocalStorageに保存する関数
+function saveCurrentSelections() {
+  const selections = {};
+console.log("save");
+  // 各ドロップダウンの選択肢を取得して保存
+  for (let i = 1; i <= 5; i++) {
+    const daySelect = document.getElementById(`member${i}`);
+    const night1Select = document.getElementById(`member${i}_night1`);
+    const night2Select = document.getElementById(`member${i}_night2`);
+
+   
+    selections[`member${i}_day`] = daySelect.value;
+    selections[`member${i}_night1`] = night1Select.value;
+    selections[`member${i}_night2`] = night2Select.value;
+    if(Rem){
+DayArray[i]=daySelect.value;
+    }
+console.log(DayArray[i]);
+  
+  }
+
+  // localStorageに保存
+  localStorage.setItem("currentSelections", JSON.stringify(selections));
+  //populateMemberOptions();
+  //loadCurrentSelections();
+}
+
+// ページ読み込み時に保存された選択肢を復元する関数
+function loadCurrentSelections() {
+  const selections = JSON.parse(localStorage.getItem("currentSelections"));
+
+  console.log("load");
+  if (selections) {
+    for (let i = 1; i <= 5; i++) {
+      const daySelect = document.getElementById(`member${i}`);
+      const night1Select = document.getElementById(`member${i}_night1`);
+      const night2Select = document.getElementById(`member${i}_night2`);
+
+      // 保存された値をドロップダウンに反映
+      daySelect.value = selections[`member${i}_day`] || "";
+      night1Select.value = selections[`member${i}_night1`] || "";
+      night2Select.value = selections[`member${i}_night2`] || "";
+    }
+  }
+}
+
+// ドロップダウンの変更を監視する関数
+function setupChangeListeners() {
+  for (let i = 1; i <= 5; i++) {
+    const daySelect = document.getElementById(`member${i}`);
+    const night1Select = document.getElementById(`member${i}_night1`);
+    const night2Select = document.getElementById(`member${i}_night2`);
+
+    // それぞれのセレクトボックスに変更リスナーを追加
+    daySelect.addEventListener('change', saveCurrentSelections);
+    night1Select.addEventListener('change', saveCurrentSelections);
+    night2Select.addEventListener('change', saveCurrentSelections);
+  }
+}
+
+//スケジュールを出力
 function outputSchedule() {
   const scheduleTable = document.getElementById("scheduleTable");
   let output = "";
@@ -223,12 +370,12 @@ function outputSchedule() {
   outputDiv.textContent = output; // 表示用のdivに文字列を設定
 }
 
-
+//ディスコに送信
 function sendSchedule(){
   const scheduleTable = document.getElementById("scheduleTable");
   const selectedDate = document.getElementById("scheduleDate").value; // 選択された日付
   let output = "";
-  output += `日付: ${selectedDate}\n\n`;
+  output += `${selectedDate}の前衛メンバー\n\n`;
   // 1行目（タイトル行）をスキップして、2行目から処理
   for (let i = 1; i < scheduleTable.rows.length; i++) {
     const row = scheduleTable.rows[i];
@@ -269,6 +416,7 @@ output+="\n";
 
   
 }
+
  // ページ読み込み時に日付の初期値を今日の日付に設定
  document.addEventListener("DOMContentLoaded", () => {
       const today = new Date();
@@ -277,13 +425,158 @@ output+="\n";
       const day = String(today.getDate()).padStart(2, '0');
       document.getElementById("scheduleDate").value = `${year}-${month}-${day}`;
     });
-function resetSchedule() {
+
+  
+
+    function resetSchedule() {
   for (let i = 1; i <= 5; i++) {
     for (const time of ["", "_night1", "_night2"]) {
       const select = document.getElementById(`member${i}${time}`);
+      saveCurrentSelections();
       select.selectedIndex = 0; // 最初の選択肢にリセット
     }
   }
+
+  populateMemberOptions();
+}
+
+
+    window.onload = () => {
+      const savedData = JSON.parse(localStorage.getItem("guildData"));
+      document.getElementById("memberCount").value = savedData ? savedData.length : initialData.length;
+      createTable();
+      console.log("再読み込み")
+      loadPod();
+      loadRem();
+      loadSit();
+      populateMemberOptions();
+      loadCurrentSelections();  // 保存された選択肢を反映
+      setupChangeListeners(); 
+
+
+  
+      const savedWebhookUrl = localStorage.getItem("webhookUrl");
+            if (savedWebhookUrl) {
+                document.getElementById("webhookInput").value = savedWebhookUrl; // 保存された値を入力欄に表示
+            }
+    };
+
+   
+
+
+
+
+
+
+    var PoD=false;
+    var PoDtoggle="OFF";
+    function positionDisplay(){
+     
+      PoD=!PoD;
+      if(PoD){
+        PoDtoggle="ON";
+      }
+      else{  
+      PoDtoggle="OFF";
+      }
+
+      populateMemberOptions();
+      saveCurrentSelections();
+      console.log("ポジションの表示を変更した"+PoD);
+      var object=document.getElementById("POD");
+      localStorage.setItem("PoD", PoD.toString());
+            object.innerText=PoDtoggle;
+    }
+
+    var Rem=false;
+    var Remtoggle="OFF";
+function remove(){
+   Rem=!Rem;
+   if(Rem){
+    Remtoggle="ON";
+   }
+   else{
+    Remtoggle="OFF";
+   }
+   var object=document.getElementById("Rem");
+   localStorage.setItem("Rem", Rem.toString());
+   object.innerText=Remtoggle;
+   populateMemberOptions();
+   saveCurrentSelections();
+}
+
+var situation=false;
+var SitToggle="OFF";
+   function situationToggle(){
+    situation=!situation;
+    if(situation){
+      SitToggle="ON";
+   }
+   else{
+    SitToggle="OFF";
+   }
+   var object=document.getElementById("Sit");
+   localStorage.setItem("Sit", situation.toString());
+   object.innerText=SitToggle;
+   populateMemberOptions();
+   saveCurrentSelections();
+   }
+
+// **読み込み（ロード）**
+function loadPod() {
+    const savedRem = localStorage.getItem("PoD"); // 保存されたデータを取得
+    if (savedRem !== null) {
+        PoD = (savedRem === "true"); // "true" を true に変換
+        console.log("Remを読み込みました:", PoD);
+    } else {
+        console.log("Remの保存データがありません。");
+    }
+    if(PoD){
+        PoDtoggle="ON";
+      }
+      else{
+        PoDtoggle="OFF";
+      }
+    var object=document.getElementById("POD");
+            object.innerText=PoDtoggle;
+}
+
+// **読み込み（ロード）**
+function loadRem() {
+    const savedRem = localStorage.getItem("Rem"); // 保存されたデータを取得
+    if (savedRem !== null) {
+        Rem = (savedRem === "true"); // "true" を true に変換
+        console.log("Remを読み込みました:", Rem);
+    } else {
+        console.log("Remの保存データがありません。");
+    }
+    if(Rem){
+    Remtoggle="ON";
+   }
+   else{
+    Remtoggle="OFF";
+   }
+   var object=document.getElementById("Rem");
+    object.innerText=Remtoggle;
+}
+
+// **読み込み（ロード）**
+function loadSit() {
+    const savedRem = localStorage.getItem("Sit"); // 保存されたデータを取得
+    if (savedRem !== null) {
+        situation = (savedRem === "true"); // "true" を true に変換
+        console.log("Remを読み込みました:", situation);
+    } else {
+        console.log("Remの保存データがありません。");
+    }
+    if(situation){
+      SitToggle="ON";
+   }
+   else{
+    SitToggle="OFF";
+   }
+   var object=document.getElementById("Sit");
+   object.innerText=SitToggle;
 }
 
 function saveWebhookUrl() {
@@ -297,22 +590,99 @@ function saveWebhookUrl() {
             }
         }
 
-    window.onload = () => {
-      const savedData = JSON.parse(localStorage.getItem("guildData"));
-      document.getElementById("memberCount").value = savedData ? savedData.length : initialData.length;
-      createTable();
-      populateMemberOptions();
-      const savedWebhookUrl = localStorage.getItem("webhookUrl");
-            if (savedWebhookUrl) {
-                document.getElementById("webhookInput").value = savedWebhookUrl; // 保存された値を入力欄に表示
-            }
-
-    };
   </script>
+  <style>
+  #resize{
+    text-align: center;
+
+    width: 20%; /* 必要に応じて調整 */
+ /* white-space: nowrap; /* テキストの折り返しを防ぐ */
+  /*overflow: hidden; /* はみ出たテキストを隠す */
+ /* text-overflow: ellipsis; /* はみ出たテキストを省略する */
+  }
+  /* 全ての <select> 要素に共通のスタイルを適用 */
+
+/* 昼の選択メニューに適用 */
+
+
+/* 夜1の選択メニューに適用 */
+#member1, #member2, #member3, #member4, #member5 ,
+#member1_night1, #member2_night1, #member3_night1, #member4_night1, #member5_night1,
+#member1_night2, #member2_night2, #member3_night2, #member4_night2, #member5_night2 
+{
+  width: 100px; /* 固定幅 */
+  height: 30px; /* 高さを設定 */
+  font-size: 12px; /* フォントサイズ */
+  padding: 5px; /* 内側の余白 */
+  border: 1px solid #ccc; /* 枠線 */
+  border-radius: 5px; /* 角を丸くする */
+  background-color: #f9f9f9; /* 背景色 */
+  outline: none; /* 選択時の青い枠線を削除 */
+  text-overflow: ellipsis; /* はみ出たテキストを省略する */
+  -webkit-appearance: none; /* Safari, Chrome */
+  -moz-appearance: none;    /* Firefox */
+  appearance: none;    
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* Safari向けのスタイル */
+  #member1, #member2, #member3, #member4, #member5 ,
+#member1_night1, #member2_night1, #member3_night1, #member4_night1, #member5_night1,
+#member1_night2, #member2_night2, #member3_night2, #member4_night2, #member5_night2 
+{
+  width: 100%; /* 固定幅 */
+  height: 30px; /* 高さを設定 */
+  font-size: 12px; /* フォントサイズ */
+  padding: 5px; /* 内側の余白 */
+  border: 1px solid #ccc; /* 枠線 */
+  border-radius: 5px; /* 角を丸くする */
+  background-color: #f9f9f9; /* 背景色 */
+  outline: none; /* 選択時の青い枠線を削除 */
+  text-overflow: ellipsis; /* はみ出たテキストを省略する */
+  -webkit-appearance: none; /* Safari, Chrome */
+  -moz-appearance: none;    /* Firefox */
+  appearance: none;    
+}
+}
+
+
+.tableLayout{
+  width: 100%; /* 固定幅 */
+}
+
+input{
+  font-size: 11px; /* フォントサイズ */
+  width: 120px; 
+  text-overflow: ellipsis; /* はみ出たテキストを省略する */
+}
+.input2{
+ /* フォントサイズ */
+  width: 80px; 
+  text-overflow: ellipsis; /* はみ出たテキストを省略する */
+}
+.output{
+  margin-top: 20px;  
+  white-space: pre-wrap;
+  margin-left: 10%;
+  font-size: 10px; /* フォントサイズ */
+}
+
+/* disabled 属性が付いている option のスタイルを変更 */
+option:disabled {
+  color: red;        /* 文字色を灰色に */
+  background-color: lightgray; /* 背景色を薄いグレーに */
+}
+.UIButton{
+  font-size: 10px; /* フォントサイズ */
+ 
+}
+
+</style>
+
 </head>
 <body>
 
-  <h1>ギルドメンバーポジション表</h1>
+    <h1>ギルドメンバーポジション表</h1>
 
   <label for="memberCount">ギルドメンバーの人数を選択してください（最大18人）:</label>
   <select id="memberCount" onchange="createTable()">
@@ -349,24 +719,32 @@ function saveWebhookUrl() {
   </table>
 
   <button onclick="resetData()">リセット</button>
+  
   <button onclick="resetParticipationData()">参加予定リセット</button>
-  <h2>前衛予定リスト</h2>
-  <label for="">上の表の変更を行った後に再読み込みをお願いします</label>
- 
+  <br>
+  <br>
+  <h3>前衛予定リスト <button onclick="situationToggle()" class="UIButton">ステータス反映モード<div id="Sit">OFF</div></button>
+    <button onclick="positionDisplay()" class="UIButton">ポジション表示<div id="POD">OFF</div></button>
+  <button onclick="remove()" class="UIButton">絞り込み機能<div id="Rem">OFF</div></button>
+  </h3> 
+
   <table border="1" id="scheduleTable">
     <thead>
       <tr>
+
         <th>時間帯</th>
-        <th>メンバー１</th>
-        <th>メンバー２</th>
-        <th>メンバー３</th>
-        <th>メンバー４</th>
-        <th>メンバー５</th>
+        
+        <th id="resize">メンバー１</th>
+        <th id="resize">メンバー２</th>
+        <th id="resize">メンバー３</th>
+        <th id="resize">メンバー４</th>
+        <th id="resize">メンバー５</th>
+      
       </tr>
     </thead>
     <tbody id="scheduleTableBody">
       <tr>
-        <td>昼</td>
+        <td>昼　</td>
         <td><select id="member1"></select></td>
         <td><select id="member2"></select></td>
         <td><select id="member3"></select></td>
@@ -391,13 +769,9 @@ function saveWebhookUrl() {
       </tr>
     </tbody>
   </table>
-  <button onclick="resetSchedule()">参加予定リセット</button>
-  <br>
-<br>
+  <button onclick="resetSchedule()">メンバーリセット</button>
+  <br><br>
   <label for="">日時を決定し送信ボタンを押すことでディスコードに送信できます</label>
- <br>
- <br>
- <label for="">ディスコードのWebhookのURLを入力してください</label>
   <br>
   <label for="webhookInput">Webhook URL:</label>
   <input type="text" id="webhookInput" placeholder="Webhook URLを入力">
@@ -414,9 +788,53 @@ function saveWebhookUrl() {
 <button id="outputButton" onclick="outputSchedule()">出力</button>
 <div id="outputString" style="margin-top: 20px;  white-space: pre-wrap; text-align: center;"></div>
 <br>
-<br> 
-<br>
 
+<div>
+  <label for="inquiry">お問い合わせ・ご要望内容:</label><br>
+  <input type="text" id="inquiryInput" placeholder="ご質問やご要望を入力してください">
+  <button onclick="handleInquiry()">送信</button>
+</div>
+<br><br><br>
+ 
+  <script>
+    function handleInquiry() {
+  const input = document.getElementById("inquiryInput").value.trim();
 
+  if (input === "") {
+    alert("お問い合わせ内容を入力してください。");
+    return;
+  }
+
+  sendMessage(input);
+}
+
+   function sendMessage(output){
+  
+// Discord Webhook URL
+  const webhookUrl =  "https://discord.com/api/webhooks/1375844567328227451/iChHYkIkJm2tWuV8N9oJyp0kxrJM23VLPRQJEzaopqdyOzU1jhJF1rd3B-fvBwAZO-ZU";
+
+  // Webhookにデータを送信
+  fetch(webhookUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      content: output // メッセージ内容
+    })
+  })
+  .then(response => {
+    if (response.ok) {
+      console.log("Data sent to Discord successfully!");
+    } else {
+      console.error("Error sending data to Discord:", response.statusText);
+    }
+  })
+  .catch(error => {
+    console.error("Error:", error);
+  });
+
+   }
+  </script>
 </body>
 </html>
