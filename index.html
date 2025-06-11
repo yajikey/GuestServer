@@ -276,7 +276,7 @@ function setupClickEvents(dropdown, index, type, members, signs, positions, arra
 
    for (let i = 1; i <= 5; i++) {
     
-    setupDropdown(type, i, members, signs, positions, array);
+   // setupDropdown(type, i, members, signs, positions, array);
   }
   
 saveCurrentSelections();
@@ -347,6 +347,9 @@ function setupChangeListeners() {
 }
 
 //スケジュールを出力
+let strvalue="";
+
+
 function outputSchedule() {
   const scheduleTable = document.getElementById("scheduleTable");
   let output = "";
@@ -365,10 +368,17 @@ function outputSchedule() {
     output += rowData.join("\t") + "\n";
   }
 
+
+
   // 出力エリアに表示
   const outputDiv = document.getElementById("outputString");
   outputDiv.textContent = output; // 表示用のdivに文字列を設定
+  strvalue=output;
+
+document.getElementById("copyButton").style.display = "block"; 
+console.log("表示");
 }
+
 
 //ディスコに送信
 function sendSchedule(){
@@ -788,57 +798,29 @@ option:disabled {
 
 
 <button id="outputButton" onclick="outputSchedule()">出力</button>
-<div id="outputString" style="margin-top: 20px;  white-space: pre-wrap; text-align: center;"></div>
-<br>
-
-<div>
-  <label for="inquiry">お問い合わせ・ご要望内容:</label><br>
-  <input type="text" id="inquiryInput" placeholder="ご質問やご要望を入力してください">
-  <button onclick="handleInquiry()">送信</button>
+<div id="copyButton">
+<button onclick="copyToClipboard()">コピー</button>
 </div>
-<br><br><br>
- 
-  <script>
-    function handleInquiry() {
-  const input = document.getElementById("inquiryInput").value.trim();
 
-  if (input === "") {
-    alert("お問い合わせ内容を入力してください。");
-    return;
-  }
-
-  sendMessage(input);
+<script>
+function copyToClipboard() {
+  const text = strvalue;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("コピーしました！");
+  }).catch(err => {
+    alert("コピーに失敗しました：" + err);
+  });
 }
 
-   function sendMessage(output){
-  
-// Discord Webhook URL
-  const webhookUrl =  "https://discord.com/api/webhooks/1375844567328227451/iChHYkIkJm2tWuV8N9oJyp0kxrJM23VLPRQJEzaopqdyOzU1jhJF1rd3B-fvBwAZO-ZU";
+if (strvalue !== "") {
 
-  // Webhookにデータを送信
-  fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      content: output // メッセージ内容
-    })
-  })
-  .then(response => {
-    if (response.ok) {
-      console.log("Data sent to Discord successfully!");
-      alert("送信が完了しました");
-    } else {
-      console.error("Error sending data to Discord:", response.statusText);
-      alert("送信を失敗しました");
-    }
-  })
-  .catch(error => {
-    console.error("Error:", error);
-  });
+} else {
+  document.getElementById("copyButton").style.display = "none"; // 非表示にする
+console.log("非表示");
+}
+console.log(strvalue);
+</script>
 
-   }
-  </script>
+<div id="outputString" class="output"></div>
 </body>
 </html>
